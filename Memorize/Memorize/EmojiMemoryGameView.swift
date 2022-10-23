@@ -15,59 +15,39 @@ struct EmojiMemoryGameView: View {
 
     var body: some View {
             VStack {
+                gameBody
+                shaffle
+            }
+            .padding(.horizontal)
+    }
 
-                AspectVGrid(items: gameViewModel.cards, aspectRatio: 2/3, content: { card in
-                    if card.isMatched && !card.isFaceUp {
-                        Rectangle().opacity(0)
-                    } else {
-                    CardView(card)
-                        .padding(4)
-                        .onTapGesture {
+
+        var gameBody: some View {
+            AspectVGrid(items: gameViewModel.cards, aspectRatio: 2/3) { card in
+                if card.isMatched && !card.isFaceUp {
+                    Color.clear // Rectangle().opacity(0)
+                } else {
+                CardView(card)
+                    .padding(4)
+                    .transition(AnyTransition.scale.animation(Animation.easeInOut(duration: 0.6)))
+                    // .transition(AnyTransition.asymmetric(insertion: .scale, removal: .opacity))
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.5)) {
                             gameViewModel.choose(card)
                         }
                     }
-                })
-
-//                ScrollView
-//                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 65))])
-//                    {
-//                        ForEach(gameViewModel.cards) { card in
-
-//                        }
-//                    }
-//                    .foregroundColor(.red)
-//                }
-
-//                Spacer()
-//                HStack {
-//                    addBtn
-//                    Spacer()
-//                    removeBtn
-//                }
-//                .font(.largeTitle)
-//                .padding(.horizontal)
+                }
             }
-            .padding(.horizontal)
-
+            .foregroundColor(.red)
         }
 
-//    var removeBtn: some View {
-//        Button {
-//            if emojiCount > 1 {
-//                emojiCount -= 1
-//            }
-//        } label:
-//            { Image(systemName: "minus.circle") }
-//    }
-//
-//    var addBtn: some View {
-//        Button {
-//            if emojiCount < emojis.count {
-//                emojiCount += 1
-//            }
-//        } label:
-//            { Image(systemName: "plus.circle") }
-//    }
+        var shaffle: some View {
+            Button("Shaffle") {
+                withAnimation(.easeInOut(duration: 0.6)) {
+                    gameViewModel.shaffle()
+                }
+            }
+        }
 }
 
 struct CardView: View {
@@ -81,36 +61,24 @@ struct CardView: View {
     var body: some View {
         GeometryReader (content: { geometry in
             ZStack {
-                let shape = RoundedRectangle(cornerRadius: DrawingConstants.cornerRadius)
 
-                if card.isFaceUp {
-                    shape
-                        .fill(LinearGradient(colors: [.white, .white, .red, .white,.white,.white,.white, .white,.blue, .white, .white], startPoint: UnitPoint(x: 0, y: 0), endPoint:  UnitPoint(x: 1, y: 1)))
-                    shape
-                        .strokeBorder(lineWidth: DrawingConstants.lineWidth)
-                    Circle().fill(.red).padding(4).opacity(DrawingConstants.backgroundOpacity)
+                    Pie(startAngle: Angle(degrees: 0-90), endAngle: Angle(degrees: 110-90))
+                        .fill(.red).padding(4).opacity(DrawingConstants.backgroundOpacity)
                     Text(card.content)
-                        .font(cardFont(geometry.size))
+                        .rotationEffect(Angle.degrees(card.isMatched ? 360 : 0))
+                        .animation(Animation.easeInOut(duration: 2).repeatForever(autoreverses: false))
+                        .font(Font.system(size: DrawingConstants.fontSize))
                         .foregroundColor(.orange)
-                } else if card.isMatched {
-                    shape.opacity(0)
-                    ZStack {
-                        Circle().overlay(Text("Guessed").foregroundColor(.white), alignment: .center).opacity(0.5)
-                    }
-                    //Divider()
-
-                } else {
-                    shape
-                        .fill(.red)
-                }
+                        .scaleEffect(scale(thatFits: geometry.size))
 
             }
+            .cardify(isFaceUp: card.isFaceUp)
         })
 
     }
 
-    private func cardFont(_ size: CGSize) -> Font {
-        Font.system(size: DrawingConstants.fontScale * min (size.width, size.height))
+    private func scale(thatFits size: CGSize) -> CGFloat {
+        min(size.width, size.height) / (DrawingConstants.fontSize / DrawingConstants.fontScale)
     }
 
     private struct DrawingConstants {
@@ -118,6 +86,7 @@ struct CardView: View {
         static let lineWidth: CGFloat = 3
         static let fontScale: CGFloat = 0.7
         static let backgroundOpacity: CGFloat = 0.5
+        static let fontSize: CGFloat = 32
     }
 }
 

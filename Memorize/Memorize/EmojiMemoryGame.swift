@@ -32,4 +32,8 @@ class EmojiMemoryGame: ObservableObject {
         //objectWillChange.send()
         model.choose(card)
     }
+
+    func shaffle() {
+        model.shaffle()
+    }
 }
